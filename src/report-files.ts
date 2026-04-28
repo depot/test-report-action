@@ -56,6 +56,9 @@ export async function discoverTestResultFiles(input: string, options: DiscoverOp
 
     const stat = await fs.stat(realPath)
     if (!stat.isFile()) continue
+    if (path.extname(realPath).toLowerCase() !== '.xml') {
+      throw new Error(`Matched test report file must have a .xml extension: ${absolutePath}`)
+    }
     if (files.length >= MAX_REPORT_FILES) {
       throw new Error(`Matched more than ${MAX_REPORT_FILES} test report files.`)
     }

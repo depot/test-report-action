@@ -96,6 +96,24 @@ test('discoverTestResultFiles accepts explicit file paths and containing directo
   }
 })
 
+test('discoverTestResultFiles rejects non-XML file matches', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'depot-test-report-action-'))
+  const originalWorkspace = process.env.GITHUB_WORKSPACE
+  process.env.GITHUB_WORKSPACE = dir
+
+  try {
+    await mkdir(path.join(dir, 'test-results'), {recursive: true})
+    await writeFile(path.join(dir, 'test-results', 'junit.xml'), '<testsuite />')
+    await writeFile(path.join(dir, 'test-results', 'junit.txt'), '<testsuite />')
+
+    await assert.rejects(() => discoverTestResultFiles('test-results/junit.txt'), /\.xml extension/)
+    await assert.rejects(() => discoverTestResultFiles('test-results/*'), /\.xml extension/)
+  } finally {
+    restoreEnv('GITHUB_WORKSPACE', originalWorkspace)
+    await rm(dir, {recursive: true, force: true})
+  }
+})
+
 test('discoverTestResultFiles rejects outside search roots before glob traversal', async () => {
   const workspace = await mkdtemp(path.join(tmpdir(), 'depot-test-report-action-workspace-'))
   const outside = await mkdtemp(path.join(tmpdir(), 'depot-test-report-action-outside-'))

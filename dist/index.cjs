@@ -30633,6 +30633,9 @@ async function discoverTestResultFiles(input, options = {}) {
     seen.add(realPath);
     const stat2 = await import_node_fs.promises.stat(realPath);
     if (!stat2.isFile()) continue;
+    if (path11.extname(realPath).toLowerCase() !== ".xml") {
+      throw new Error(`Matched test report file must have a .xml extension: ${absolutePath}`);
+    }
     if (files.length >= MAX_REPORT_FILES) {
       throw new Error(`Matched more than ${MAX_REPORT_FILES} test report files.`);
     }

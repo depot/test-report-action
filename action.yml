@@ -1,0 +1,29 @@
+name: Depot Test Report Action
+description: Upload JUnit XML test reports to Depot CI.
+author: Depot
+branding:
+  icon: check-square
+  color: blue
+runs:
+  using: node24
+  main: dist/index.cjs
+inputs:
+  path:
+    description: |-
+      Path or glob for JUnit XML reports. Use newline-separated values to report
+      from multiple paths.
+    required: true
+  key:
+    description: |-
+      Optional invocation key. Defaults to GITHUB_ACTION, then "default".
+    default: ''
+    required: false
+outputs:
+  files-processed:
+    description: Number of files accepted by Depot.
+  files-skipped:
+    description: Number of files skipped by Depot.
+  tests-reported:
+    description: Number of tests parsed by Depot.
+  duplicate-invocation:
+    description: Whether Depot ignored this upload because the invocation was already reported.

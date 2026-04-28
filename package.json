@@ -1,0 +1,43 @@
+{
+  "type": "module",
+  "private": true,
+  "packageManager": "pnpm@9.15.5+sha512.845196026aab1cc3f098a0474b64dfbab2afe7a1b4e91dd86895d8e4aa32a7a6d03049e2d0ad770bbe4de023a7122fb68c1a1d6e0d033c7076085f9d5d4800d4",
+  "scripts": {
+    "build": "node build.cjs",
+    "fmt": "prettier --write .",
+    "fmt:check": "prettier --check .",
+    "generate": "buf generate && prettier --write src/gen",
+    "test": "node --import tsx --test src/**/*.test.ts",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@actions/core": "3.0.1",
+    "@actions/glob": "0.7.0",
+    "@bufbuild/protobuf": "^2.11.0",
+    "@connectrpc/connect": "^2.1.1",
+    "@connectrpc/connect-node": "^2.1.1"
+  },
+  "devDependencies": {
+    "@bufbuild/buf": "1.68.4",
+    "@bufbuild/protoc-gen-es": "2.12.0",
+    "@tsconfig/node24": "24.0.4",
+    "@types/node": "24.1.0",
+    "esbuild": "^0.25.0",
+    "prettier": "^3.0.2",
+    "prettier-plugin-organize-imports": "^3.2.3",
+    "prettier-plugin-pkg": "^0.18.0",
+    "tsx": "^4.20.6",
+    "typescript": "5.9.3"
+  },
+  "prettier": {
+    "bracketSpacing": false,
+    "printWidth": 120,
+    "semi": false,
+    "singleQuote": true,
+    "trailingComma": "all",
+    "plugins": [
+      "prettier-plugin-pkg",
+      "prettier-plugin-organize-imports"
+    ]
+  }
+}

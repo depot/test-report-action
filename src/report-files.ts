@@ -86,6 +86,11 @@ export async function prepareReportFiles(files: DiscoveredFile[], logger: Logger
     let contents: Buffer
     let fileBytes = 0
     try {
+      const currentRealPath = await fs.realpath(file.absolutePath)
+      if (currentRealPath !== file.absolutePath) {
+        throw new Error(`Test report file changed after discovery: ${file.filename}`)
+      }
+
       const stat = await handle.stat()
       if (!stat.isFile()) {
         throw new Error(`Matched test report is not a regular file: ${file.filename}`)

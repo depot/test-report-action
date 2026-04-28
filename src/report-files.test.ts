@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import {mkdir, mkdtemp, rm, stat, symlink, writeFile} from 'node:fs/promises'
+import {mkdir, mkdtemp, realpath, rm, stat, symlink, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import * as path from 'node:path'
 import test from 'node:test'
@@ -389,9 +389,10 @@ function noopCore() {
 }
 
 async function discoveredFile(absolutePath: string, filename: string): Promise<DiscoveredFile> {
-  const fileStat = await stat(absolutePath)
+  const resolvedPath = await realpath(absolutePath)
+  const fileStat = await stat(resolvedPath)
   return {
-    absolutePath,
+    absolutePath: resolvedPath,
     filename,
     dev: fileStat.dev,
     ino: fileStat.ino,

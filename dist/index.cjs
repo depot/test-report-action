@@ -30658,6 +30658,10 @@ async function prepareReportFiles(files, logger) {
     let contents;
     let fileBytes = 0;
     try {
+      const currentRealPath = await import_node_fs.promises.realpath(file.absolutePath);
+      if (currentRealPath !== file.absolutePath) {
+        throw new Error(`Test report file changed after discovery: ${file.filename}`);
+      }
       const stat2 = await handle.stat();
       if (!stat2.isFile()) {
         throw new Error(`Matched test report is not a regular file: ${file.filename}`);

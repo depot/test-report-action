@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package depot.testresults.v1;
+
+option go_package = "github.com/depot/api/proto/depot/testresults/v1;testresultsv1";
+
+// TestResultsService ingests and exposes normalized test-result reports for
+// Depot-managed execution contexts. The request body never carries trusted
+// owner identity; the server derives (orgID, ownerType, ownerID) from auth.
+service TestResultsService {
+  // ReportTestResults ingests one or more gzipped JUnit XML files for the
+  // authenticated execution owner and invocation.
+  rpc ReportTestResults(ReportTestResultsRequest) returns (ReportTestResultsResponse) {}
+}
+
+message ReportTestResultsRequest {
+  // Per-step identity key. Populated by the action from `key:` input, else
+  // $GITHUB_ACTION, else "default". This becomes the future persistence
+  // key for de-duplicating multiple reports within a single owner.
+  // Required: handler returns INVALID_ARGUMENT on empty.
+  string invocation_id = 1;
+
+  // One entry per JUnit XML file matched by the action's glob.
+  repeated TestResultsFile files = 2;
+}
+
+message TestResultsFile {
+  // Relative filename from the action's glob (telemetry/debugging only).
+  string filename = 1;
+  // gzip-compressed JUnit XML bytes. This must be a gzip stream, not a zip
+  // archive containing multiple XML files.
+  bytes gzipped_xml = 2;
+}
+
+message ReportTestResultsResponse {
+  // Count of files the handler successfully gunzipped and parsed.
+  uint32 files_processed = 1;
+  // Total <testcase> rows parsed from accepted JUnit XML files.
+  // Persistence lands with the storage-backed ingestion implementation.
+  uint32 tests_reported = 2;
+  // Reserved for the storage-backed implementation. Always false in the
+  // current parse-only slice.
+  bool duplicate_invocation = 3;
+  // Count of files skipped because they could not be gunzipped, parsed as
+  // recognizable JUnit XML, or accepted within the request resource budget.
+  uint32 files_skipped = 4;
+}

@@ -3,6 +3,7 @@ import {create} from '@bufbuild/protobuf'
 import {createClient} from '@connectrpc/connect'
 import {createConnectTransport} from '@connectrpc/connect-node'
 import {parseInputs, type ActionInputs} from './action-inputs.js'
+import {resolveReportCredential} from './credentials.js'
 import {
   ReportTestResultsRequestSchema,
   TestResultsService,
@@ -20,8 +21,6 @@ interface ReportContext {
 
 async function run() {
   const inputs = readInputs()
-  core.setSecret(inputs.token)
-
   core.info(`Using invocation key "${inputs.invocationKey}"`)
 
   const files = await core.group('Discovering test reports', () =>
@@ -36,6 +35,15 @@ async function run() {
     throw new Error(`No test report files matched: ${formatInputForLog(inputs.pathInput)}`)
   }
 
+  // Unsupported runners should skip before reading and compressing report contents.
+  const credential = await resolveReportCredential(core.getIDToken)
+  if (!credential) {
+    core.warning('Depot test report credentials are unavailable. Skipping test report upload.')
+    return
+  }
+  core.setSecret(credential.token)
+  core.info('Using OIDC credential for upload')
+
   const reportFiles = await core.group('Preparing upload', () => prepareReportFiles(files, core))
   const request = create(ReportTestResultsRequestSchema, {
     invocationId: inputs.invocationKey,
@@ -43,12 +51,14 @@ async function run() {
   })
   const reportContext: ReportContext = {
     requestHeaders: {
-      Authorization: `Bearer ${inputs.token}`,
+      Authorization: `Bearer ${credential.token}`,
     },
   }
   const response = await reportTestResults(request, reportContext).catch((error: unknown) => {
-    throw new Error(`Depot test report upload failed: ${error instanceof Error ? error.message : String(error)}`)
+    core.warning(`Depot test report upload failed: ${error instanceof Error ? error.message : String(error)}`)
+    return null
   })
+  if (!response) return
 
   setOutputs(response)
   await writeSummarySafely(files.length, response)

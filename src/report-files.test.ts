@@ -5,7 +5,7 @@ import * as path from 'node:path'
 import test from 'node:test'
 import {promisify} from 'node:util'
 import {gunzip} from 'node:zlib'
-import {parseInputs, resolveInvocationKey, resolveToken} from './action-inputs.js'
+import {parseInputs, resolveInvocationKey} from './action-inputs.js'
 import {
   discoverTestResultFiles,
   MAX_REPORT_FILES,
@@ -27,26 +27,15 @@ test('resolveInvocationKey prefers explicit key, then GITHUB_ACTION, then defaul
   assert.equal(resolveInvocationKey('  ', '  '), 'default')
 })
 
-test('resolveToken uses DEPOT_TOKEN only', () => {
-  assert.equal(resolveToken({DEPOT_TOKEN: 'depot-token'}), 'depot-token')
-  assert.equal(resolveToken({DEPOT_TOKEN: '  depot-token  '}), 'depot-token')
-  assert.throws(() => resolveToken({UNRELATED_TOKEN: 'other-token'}), /must run in Depot CI/)
-  assert.throws(() => resolveToken({}), /must run in Depot CI/)
-})
-
 test('parseInputs validates path and resolves defaults', () => {
   const inputs = parseInputs(' test-results/ ', ' unit ', {
-    DEPOT_TOKEN: 'depot-token',
     GITHUB_ACTION: 'github_step',
   })
 
   assert.equal(inputs.pathInput, 'test-results/')
   assert.equal(inputs.invocationKey, 'unit')
-  assert.equal(inputs.token, 'depot-token')
 
-  assert.throws(() => parseInputs('   ', undefined, {DEPOT_TOKEN: 'depot-token'}), /Missing required input "path"/)
-
-  assert.throws(() => parseInputs('test-results/', 'input-token', {}), /must run in Depot CI/)
+  assert.throws(() => parseInputs('   ', undefined, {}), /Missing required input "path"/)
 })
 
 test('discoverTestResultFiles expands directory inputs to XML files', async () => {

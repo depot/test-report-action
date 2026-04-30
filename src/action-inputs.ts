@@ -1,7 +1,6 @@
 export interface ActionInputs {
   pathInput: string
   invocationKey: string
-  token: string
   workspace: string
 }
 
@@ -18,18 +17,11 @@ export function parseInputs(
   }
 
   const invocationKey = resolveInvocationKey(keyInputValue, env.GITHUB_ACTION)
-  const token = resolveToken(env)
   const workspace = env.GITHUB_WORKSPACE || process.cwd()
 
-  return {pathInput, invocationKey, token, workspace}
+  return {pathInput, invocationKey, workspace}
 }
 
 export function resolveInvocationKey(keyInput: string | undefined, githubAction: string | undefined): string {
   return keyInput?.trim() || githubAction?.trim() || 'default'
-}
-
-export function resolveToken(env: NodeJS.ProcessEnv): string {
-  const token = env.DEPOT_TOKEN?.trim()
-  if (token) return token
-  throw new Error('Depot test report credentials are unavailable. This action must run in Depot CI.')
 }

@@ -1,5 +1,5 @@
 name: Depot Test Report Action
-description: Upload JUnit XML test reports to Depot CI.
+description: Upload JUnit XML test reports to Depot.
 author: Depot
 branding:
   icon: check-square

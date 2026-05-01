@@ -1,3 +1,5 @@
+import * as core from '@actions/core'
+
 export const DEPOT_OIDC_AUDIENCE = 'https://depot.dev'
 
 export interface ReportCredential {
@@ -10,8 +12,10 @@ export async function resolveReportCredential(
   try {
     const oidcToken = (await requestIDToken(DEPOT_OIDC_AUDIENCE)).trim()
     if (oidcToken) return {token: oidcToken}
-  } catch {
-    // Missing id-token permission or unsupported runner environment.
+
+    core.warning('Unable to acquire Depot OIDC credential: OIDC token request returned an empty token')
+  } catch (error) {
+    core.warning(`Unable to acquire Depot OIDC credential: ${error instanceof Error ? error.message : String(error)}`)
   }
 
   return null

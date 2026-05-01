@@ -28096,7 +28096,9 @@ async function resolveReportCredential(requestIDToken) {
   try {
     const oidcToken = (await requestIDToken(DEPOT_OIDC_AUDIENCE)).trim();
     if (oidcToken) return { token: oidcToken };
-  } catch {
+    warning("Unable to acquire Depot OIDC credential: OIDC token request returned an empty token");
+  } catch (error3) {
+    warning(`Unable to acquire Depot OIDC credential: ${error3 instanceof Error ? error3.message : String(error3)}`);
   }
   return null;
 }

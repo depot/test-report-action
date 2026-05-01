@@ -1,11 +1,15 @@
 # Depot Test Report Action
 
-Upload JUnit XML test reports from Depot CI jobs so Depot can show parsed test
-failures and counts in the dashboard.
+Upload JUnit XML test reports from Depot CI jobs and jobs using Depot GitHub
+Action runners so Depot can show parsed test failures and counts in the
+dashboard.
 
 ## Usage
 
 ```yaml
+permissions:
+  id-token: write
+
 steps:
   - run: npm test -- --reporter=junit --outputFile=test-results/junit.xml
 
@@ -20,8 +24,9 @@ exit non-zero when tests fail. Without the guard, GitHub Actions semantics skip
 later steps and the report upload will not run for the failures you most need to
 inspect.
 
-This action is for Depot CI jobs. It uses the Depot CI runner environment;
-workflow authors do not pass a token to this action.
+This action is for Depot CI jobs and jobs using Depot GitHub Action runners. It
+requests an OIDC token for Depot; workflow authors do not pass a
+token to this action.
 
 ## Inputs
 
@@ -79,9 +84,15 @@ derived from the JUnit XML contents.
 
 ## Behavior
 
-Missing or blank `path`, zero matching files, unsupported runner environments,
-and Depot upload failures fail the action by default. If test reporting should
-be best-effort for a workflow, opt into GitHub Actions' native behavior:
+Missing or blank `path` and zero matching files fail the action by default.
+Unsupported runner environments, missing OIDC permission, and Depot upload
+failures are logged as warnings and do not fail the job.
+When OIDC credentials are unavailable, the action skips before reading and
+compressing matched report contents, so report size limits are only checked when
+an upload is attempted.
+
+If invalid path configuration should also be best-effort for a workflow, opt
+into GitHub Actions' native behavior:
 
 ```yaml
 - uses: depot/test-report-action@v1

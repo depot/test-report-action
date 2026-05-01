@@ -28083,17 +28083,22 @@ function parseInputs(pathInputValue, keyInputValue, env) {
     );
   }
   const invocationKey = resolveInvocationKey(keyInputValue, env.GITHUB_ACTION);
-  const token = resolveToken(env);
   const workspace = env.GITHUB_WORKSPACE || process.cwd();
-  return { pathInput, invocationKey, token, workspace };
+  return { pathInput, invocationKey, workspace };
 }
 function resolveInvocationKey(keyInput, githubAction) {
   return keyInput?.trim() || githubAction?.trim() || "default";
 }
-function resolveToken(env) {
-  const token = env.DEPOT_TOKEN?.trim();
-  if (token) return token;
-  throw new Error("Depot test report credentials are unavailable. This action must run in Depot CI.");
+
+// src/credentials.ts
+var DEPOT_OIDC_AUDIENCE = "https://depot.dev";
+async function resolveReportCredential(requestIDToken) {
+  try {
+    const oidcToken = (await requestIDToken(DEPOT_OIDC_AUDIENCE)).trim();
+    if (oidcToken) return { token: oidcToken };
+  } catch {
+  }
+  return null;
 }
 
 // src/gen/depot/testresults/v1/test_results_pb.ts
@@ -30798,7 +30803,6 @@ var DEFAULT_API_URL = "https://api.depot.dev";
 var REPORT_RPC_TIMEOUT_MS = 6e4;
 async function run() {
   const inputs = readInputs();
-  setSecret(inputs.token);
   info(`Using invocation key "${inputs.invocationKey}"`);
   const files = await group(
     "Discovering test reports",
@@ -30811,6 +30815,13 @@ async function run() {
   if (files.length === 0) {
     throw new Error(`No test report files matched: ${formatInputForLog(inputs.pathInput)}`);
   }
+  const credential = await resolveReportCredential(getIDToken);
+  if (!credential) {
+    warning("Depot test report credentials are unavailable. Skipping test report upload.");
+    return;
+  }
+  setSecret(credential.token);
+  info("Using OIDC credential for upload");
   const reportFiles = await group("Preparing upload", () => prepareReportFiles(files, core_exports));
   const request3 = create(ReportTestResultsRequestSchema, {
     invocationId: inputs.invocationKey,
@@ -30818,12 +30829,14 @@ async function run() {
   });
   const reportContext = {
     requestHeaders: {
-      Authorization: `Bearer ${inputs.token}`
+      Authorization: `Bearer ${credential.token}`
     }
   };
   const response = await reportTestResults(request3, reportContext).catch((error3) => {
-    throw new Error(`Depot test report upload failed: ${error3 instanceof Error ? error3.message : String(error3)}`);
+    warning(`Depot test report upload failed: ${error3 instanceof Error ? error3.message : String(error3)}`);
+    return null;
   });
+  if (!response) return;
   setOutputs(response);
   await writeSummarySafely(files.length, response);
   logResponse(response);

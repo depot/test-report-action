@@ -28092,8 +28092,19 @@ function resolveInvocationKey(keyInput, githubAction) {
 
 // src/credentials.ts
 var DEPOT_OIDC_AUDIENCE = "https://depot.dev";
-async function resolveReportCredential(requestIDToken) {
+var DEPOT_CI_OIDC_REQUEST_URL = "http://169.254.169.253/token?v=1";
+var DEPOT_CI_OIDC_REQUEST_TOKEN = "local";
+function isRunningInDepotCI(env) {
+  return env.GITHUB_ACTIONS === "true" && env.RUNNER_NAME === "Depot CI" && Boolean(env.DEPOT_ORG_ID?.trim());
+}
+function configureDepotCIOIDCEnv(env) {
+  if (!isRunningInDepotCI(env)) return;
+  env.ACTIONS_ID_TOKEN_REQUEST_URL ||= DEPOT_CI_OIDC_REQUEST_URL;
+  env.ACTIONS_ID_TOKEN_REQUEST_TOKEN ||= DEPOT_CI_OIDC_REQUEST_TOKEN;
+}
+async function resolveReportCredential(requestIDToken, env = process.env) {
   try {
+    configureDepotCIOIDCEnv(env);
     const oidcToken = (await requestIDToken(DEPOT_OIDC_AUDIENCE)).trim();
     if (oidcToken) return { token: oidcToken };
   } catch {

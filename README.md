@@ -7,9 +7,6 @@ dashboard.
 ## Usage
 
 ```yaml
-permissions:
-  id-token: write
-
 steps:
   - run: npm test -- --reporter=junit --outputFile=test-results/junit.xml
 
@@ -27,6 +24,14 @@ inspect.
 This action is for Depot CI jobs and jobs using Depot GitHub Action runners. It
 requests an OIDC token for Depot; workflow authors do not pass a
 token to this action.
+
+Depot CI uses native sandbox OIDC automatically. Jobs using Depot GitHub Action
+runners run under GitHub Actions and require the normal GitHub OIDC permission:
+
+```yaml
+permissions:
+  id-token: write
+```
 
 ## Inputs
 
@@ -85,8 +90,9 @@ derived from the JUnit XML contents.
 ## Behavior
 
 Missing or blank `path` and zero matching files fail the action by default.
-Unsupported runner environments, missing OIDC permission, and Depot upload
-failures are logged as warnings and do not fail the job.
+Unsupported runner environments, missing OIDC permission on Depot GitHub Action
+runner jobs, and Depot upload failures are logged as warnings and do not fail
+the job.
 When OIDC credentials are unavailable, the action skips before reading and
 compressing matched report contents, so report size limits are only checked when
 an upload is attempted.

@@ -22,7 +22,7 @@
     "@bufbuild/protoc-gen-es": "2.12.0",
     "@tsconfig/node24": "24.0.4",
     "@types/node": "24.1.0",
-    "esbuild": "^0.25.0",
+    "esbuild": "^0.28.1",
     "prettier": "^3.0.2",
     "prettier-plugin-organize-imports": "^3.2.3",
     "prettier-plugin-pkg": "^0.18.0",
